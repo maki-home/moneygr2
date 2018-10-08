@@ -1,8 +1,8 @@
 package am.ik.moneygr2.outcome;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Date;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
@@ -47,15 +47,13 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 
 	// Audit
 	@CreatedDate
-	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
-	private Date createdAt;
+	private Instant createdAt;
 	@CreatedBy
 	@Column(updatable = false)
 	private String createdBy;
 	@LastModifiedDate
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date updatedAt;
+	private Instant updatedAt;
 	@LastModifiedBy
 	private String updatedBy;
 
@@ -128,11 +126,11 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 		isCreditCard = creditCard;
 	}
 
-	public Date getCreatedAt() {
+	public Instant getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(Date createdAt) {
+	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
 	}
 
@@ -144,11 +142,11 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 		this.createdBy = createdBy;
 	}
 
-	public Date getUpdatedAt() {
+	public Instant getUpdatedAt() {
 		return updatedAt;
 	}
 
-	public void setUpdatedAt(Date updatedAt) {
+	public void setUpdatedAt(Instant updatedAt) {
 		this.updatedAt = updatedAt;
 	}
 
