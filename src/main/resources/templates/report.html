@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Moneygr</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}"/>
+</head>
+<body>
+<div class="uk-grid">
+    <div class="uk-width-10-10">
+        <nav class="uk-navbar">
+            <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
+        </nav>
+        <ul class="uk-tab" data-uk-tab="">
+            <li><a th:href="@{/outcomes}">支出</a></li>
+            <li><a th:href="@{/incomes}">収入</a></li>
+            <li><a th:href="@{/report}">今月のレポート</a></li>
+            <li><a th:href="@{${@environment.getProperty('uaa-url', 'http://localhost:9999/uaa')}}"><i
+                    class="uk-icon-user"></i> <span th:text="${user.fullName}"></span></a></li>
+        </ul>
+        <h2><span th:text="${fromDate.toString() + ' ~ ' + toDate.toString()}"></span>のレポート</h2>
+        <ul class="uk-pagination">
+            <li class="uk-pagination-previous"><a
+                    th:href="@{'/report'(fromDate=${fromDate.minusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
+                    th:text="${fromDate.minusMonths(1).year + '-' + fromDate.minusMonths(1).monthValue}">...</a>
+            </li>
+            <li class="uk-pagination-next"><a
+                    th:href="@{'/report'(fromDate=${fromDate.plusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
+                    th:text="${fromDate.plusMonths(1).year + '-' + fromDate.plusMonths(1).monthValue}">...</a>
+            </li>
+        </ul>
+        <form method="get" class=" uk-form">
+            <input name="fromDate" type="date" th:value="${fromDate}"/> ~
+            <input name="toDate" type="date" th:value="${toDate}"/>
+            <button class="uk-button">Go</button>
+        </form>
+        <h3>収支報告</h3>
+        <a th:href="@{/report(stack=true,fromDate=${fromDate},toDate=${toDate})}" th:unless="${stack}">積み上げる</a>
+        <a th:href="@{/report(stack=false,fromDate=${fromDate},toDate=${toDate})}" th:if="${stack}">積み上げない</a>
+        <div id="graph" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+        <table class="uk-table uk-table-condensed">
+            <tbody>
+            <tr>
+                <th>支出</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            <tr>
+                <th>収入</th>
+                <td><span th:text="${#numbers.formatInteger(incomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            <tr>
+                <th>収支</th>
+                <td><span th:text="${#numbers.formatInteger(inout, 3, 'COMMA')}"
+                          th:class="${inout >= 0} ? 'uk-text-success' : 'uk-text-danger'"></span>円
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <h3>支出</h3>
+        <a th:href="@{/outcomes(fromDate=${fromDate},toDate=${toDate})}">この期間の全支出</a>
+        <table class="uk-table uk-table-striped uk-table-condensed" th:if="${outcomeSummaryByDate != null}">
+            <thead>
+            <tr>
+                <th>支出日</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${outcomeSummaryByDate}">
+                <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <table class="uk-table uk-table-striped uk-table-condensed" th:if="${outcomeSummaryByMonth != null}">
+            <thead>
+            <tr>
+                <th>支出月</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${outcomeSummaryByMonth}">
+                <td><a th:href="@{'/outcomes/'(fromDate=${outcome.outcomeDate})}"
+                       th:text="${outcome.outcomeDate.year + '-' + outcome.outcomeDate.monthValue}"></a>
+                </td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+        <div id="categories" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+        <table class="uk-table uk-table-striped uk-table-condensed">
+            <thead>
+            <tr>
+                <th>カテゴリ</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${outcomeSummaryByParentCategory}">
+                <td>
+                    <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
+                       th:text="${outcome.parentCategoryName}"></a></td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+        <h3>収入</h3>
+        <table class="uk-table uk-table-striped uk-table-condensed">
+            <thead>
+            <tr>
+                <th>収入日</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="income : ${incomeSummaryByMonth}" th:if="${incomeSummaryByMonth != null}">
+                <td><a th:href="@{'/incomes/'(fromDate=${income.incomeDate})}"
+                       th:text="${income.incomeDate.year + '-' + income.incomeDate.monthValue}"></a>
+                </td>
+                <td><span th:text="${#numbers.formatInteger(income.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${#numbers.formatInteger(incomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+    <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
+        <button class="uk-button"><i class="uk-icon-sign-out"></i> Logout</button>
+    </form>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script type="text/javascript" th:inline="javascript">/*<![CDATA[*/
+    (function () {
+        var outcomeGraphData = JSON.parse(/*[[${outcomeGraphData}]]*/ '[]');
+        var incomeGraphData = JSON.parse(/*[[${incomeGraphData}]]*/ '[]');
+        var stack = /*[[${stack}]]*/ false;
+        var categories = [];
+        var outcomes = [];
+        var incomes = [];
+        var outcomeStack = 0;
+        var incomeStack = 0;
+        for (var i = outcomeGraphData.length - 1; i >= 0; i--) {
+            var data = outcomeGraphData[i];
+            categories.push(data.outcomeDate);
+            outcomes.push(data.subTotal + (stack ? outcomeStack : 0));
+            if (incomeGraphData && incomeGraphData.length == outcomeGraphData.length) {
+                incomes.push(incomeGraphData[i].subTotal + (stack ? incomeStack : 0));
+            }
+            outcomeStack += data.subTotal;
+            incomeStack += incomeGraphData[i].subTotal;
+        }
+        Highcharts.chart('graph', {
+            chart: {
+                type: 'areaspline'
+            },
+            title: {
+                text: '収支レポート'
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'left',
+                verticalAlign: 'top',
+                x: 150,
+                y: 100,
+                floating: true,
+                borderWidth: 1,
+                backgroundColor: '#FFFFFF'
+            },
+            xAxis: {
+                categories: categories
+            },
+            yAxis: {
+                title: {
+                    text: '円'
+                }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' 円'
+            },
+            credits: {
+                enabled: false
+            },
+            plotOptions: {
+                areaspline: {
+                    fillOpacity: 0.5
+                }
+            },
+            series: [{
+                name: '収入',
+                data: incomes,
+                color: '#7cb5ec'
+            }, {
+                name: '支出',
+                data: outcomes,
+                color: '#f7a35c'
+            }]
+        });
+    })();
+    (function () {
+        var categoryGraphData = JSON.parse(/*[[${categoryGraphData}]]*/ '[]');
+        var data = [];
+        for (var i = 0; i < categoryGraphData.length; i++) {
+            var category = categoryGraphData[i];
+            data.push({
+                name: category.parentCategoryName,
+                y: category.subTotal
+            });
+        }
+        Highcharts.chart('categories', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            title: {
+                text: 'カテゴリ内訳'
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' 円'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                name: 'カテゴリ名',
+                colorByPoint: true,
+                data: data
+            }]
+        });
+    })();
+    /*]]>*/</script>
+</div>
+</body>
+</html>
