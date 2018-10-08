@@ -1,0 +1,121 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: moneygr-service
+  namespace: moneygr
+  labels:
+    app: moneygr
+spec:
+  selector:
+    app: moneygr
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 30097
+    name: http
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: moneygr
+  namespace: moneygr
+  labels:
+    app: moneygr
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: moneygr
+    spec:
+      containers:
+      - name: moneygr
+        image: making/moneygr2
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SERVER_PORT
+          value: "8080"
+        - name: _JAVA_OPTIONS
+          value: "-Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP"
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_UAA_CLIENT_ID
+          value: moneygr
+        - name: LOGGING_EXCEPTION_CONVERSION_WORD
+          value: "\t%replace(%replace(%xEx){'\n','@n@'}){'\t','    '}%nopex"
+        - name: LOGGING_PATTERN_CONSOLE
+          value: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${logging.pattern.level:%5p}) %clr(${PID: }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %replace(%m){'\n','@n@'}${logging.exception-conversion-word:%wEx}%n"
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            secretKeyRef:
+              name: moneygr-db-secret
+              key: mysql-jdbc-url
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: moneygr-db-secret
+              key: mysql-user
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: moneygr-db-secret
+              key: mysql-password
+        resources:
+          limits:
+            memory: "512Mi"
+          requests:
+            memory: "512Mi"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 15
+          timeoutSeconds: 3
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 180
+          timeoutSeconds: 3
+          periodSeconds: 10
+          failureThreshold: 3
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: moneygr-ingress
+  namespace: moneygr
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+  - hosts:
+    - moneygr.ik.am
+  rules:
+  - host: moneygr.ik.am
+    http:
+      paths:
+      - backend:
+          serviceName: moneygr-service
+          servicePort: 8080
+---
+apiVersion: apps.pivotal.io/v1beta1
+kind: Sink
+metadata:
+  name: logstash-sink
+  namespace: moneygr
+spec:
+  enable_tls: true
+  host: logstash.japaneast.cloudapp.azure.com
+  insecure_skip_verify: true
+  port: 5514
+  type: syslog
