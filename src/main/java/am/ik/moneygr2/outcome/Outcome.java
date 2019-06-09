@@ -4,7 +4,14 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -44,6 +51,7 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 	@NotNull
 	private OutcomeCategory outcomeCategory;
 	private boolean isCreditCard;
+	private boolean isExpense;
 
 	// Audit
 	@CreatedDate
@@ -126,6 +134,14 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 		isCreditCard = creditCard;
 	}
 
+	public boolean isExpense() {
+		return isExpense;
+	}
+
+	public void setExpense(boolean expense) {
+		isExpense = expense;
+	}
+
 	public Instant getCreatedAt() {
 		return createdAt;
 	}
@@ -174,6 +190,8 @@ public class Outcome extends AbstractAggregateRoot implements Serializable {
 		OutcomeCategory getOutcomeCategory();
 
 		boolean isCreditCard();
+
+		boolean isExpense();
 	}
 
 	public interface SummaryByDate {

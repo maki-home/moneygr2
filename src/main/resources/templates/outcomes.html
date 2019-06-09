@@ -66,6 +66,8 @@
             </select><br/>
             <label><input th:field="*{creditCard}" class="uk-form" type="checkbox"/> <i
                     class="uk-icon-credit-card uk-icon-medium"></i></label>
+            <label><input th:field="*{expense}" class="uk-form" type="checkbox"/> <i
+                    class="uk-icon-camera uk-icon-medium"></i></label>
             <input type="hidden" name="outcomeId"/>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
@@ -120,7 +122,8 @@
                 <td><span th:text="${outcome.outcomeName}"></span></td>
                 <td><span th:text="${#numbers.formatInteger(outcome.amount, 3, 'COMMA')}"></span>円 x <span
                         th:text="${outcome.quantity}"></span>
-                    <i class="uk-icon-credit-card" th:if="${outcome.creditCard}"></i></td>
+                    <i class="uk-icon-credit-card" th:if="${outcome.creditCard}"></i>
+                    <i class="uk-icon-camera" th:if="${outcome.expense}"></i></td>
             </tr>
             <tr>
                 <td><span th:text="${members[outcome.outcomeBy].fullName}"></span></td>
@@ -198,10 +201,10 @@
                             });
                         for (var k in outcome) {
                             if (f[k]) {
-                                if (k != 'creditCard') {
-                                    f[k].value = outcome[k];
+                                if (k === 'creditCard' || k === 'expense') {
+                                    f[k].checked = outcome[k];
                                 } else {
-                                    f._creditCard = outcome.creditCard ? 'on' : 'off';
+                                    f[k].value = outcome[k];
                                 }
                             }
                         }
