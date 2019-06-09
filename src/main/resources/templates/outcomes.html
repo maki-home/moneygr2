@@ -82,6 +82,8 @@
             <input name="toDate" type="date" th:value="${toDate}"/>
             <input name="parentCategoryId" type="hidden" th:if="${param.parentCategoryId != null}"
                    th:value="${param.parentCategoryId[0]}"/>
+            <input name="onlyExpenses" type="hidden" th:if="${param.onlyExpenses != null}"
+                   th:value="${param.onlyExpenses[0]}"/>
             <button class="uk-button">Go</button>
         </form>
         <ul class="uk-pagination" th:if="${outcomeDate != null}">
@@ -123,7 +125,7 @@
                 <td><span th:text="${#numbers.formatInteger(outcome.amount, 3, 'COMMA')}"></span>円 x <span
                         th:text="${outcome.quantity}"></span>
                     <i class="uk-icon-credit-card" th:if="${outcome.creditCard}"></i>
-                    <i class="uk-icon-camera" th:if="${outcome.expense}"></i></td>
+                    <a th:href="@{'/outcomes'(fromDate=${outcome.outcomeDate},toDate=${outcome.outcomeDate},onlyExpenses=true)}"><i class="uk-icon-camera" th:if="${outcome.expense}"></i></a></td>
             </tr>
             <tr>
                 <td><span th:text="${members[outcome.outcomeBy].fullName}"></span></td>

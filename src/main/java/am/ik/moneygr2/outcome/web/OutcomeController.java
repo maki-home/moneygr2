@@ -23,7 +23,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class OutcomeController {
@@ -45,26 +50,31 @@ public class OutcomeController {
 	}
 
 	@GetMapping(path = { "outcomes", "/" })
-	public String showOutcomes(Model model,
-			@AuthenticationPrincipal MoneygrOidcUser user) {
+	public String showOutcomes(Model model, @AuthenticationPrincipal MoneygrOidcUser user,
+			@RequestParam(defaultValue = "false") boolean onlyExpenses) {
 		LocalDate now = LocalDate.now();
 		model.addAttribute("outcomeDate", now);
-		return showOutcomes(model, user, now);
+		return showOutcomes(model, user, now, onlyExpenses);
 	}
 
 	@GetMapping(path = "outcomes/{outcomeDate}")
 	public String showOutcomes(Model model, @AuthenticationPrincipal MoneygrOidcUser user,
-			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate) {
-		return showOutcomes(model, user, outcomeDate, Optional.of(outcomeDate));
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate,
+			@RequestParam(defaultValue = "false") boolean onlyExpenses) {
+		return showOutcomes(model, user, outcomeDate, Optional.of(outcomeDate),
+				onlyExpenses);
 	}
 
 	@GetMapping(path = "outcomes", params = "fromDate")
 	public String showOutcomes(Model model, @AuthenticationPrincipal MoneygrOidcUser user,
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
-			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate,
+			@RequestParam(defaultValue = "false") boolean onlyExpenses) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-		List<Outcome> outcomes = this.outcomeRepository.findByOutcomeDate(fromDate, to);
+		List<Outcome> outcomes = onlyExpenses
+				? this.outcomeRepository.findByOutcomeDateOnlyExpenses(fromDate, to)
+				: this.outcomeRepository.findByOutcomeDate(fromDate, to);
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
 		model.addAttribute("outcomes", outcomes);
@@ -119,8 +129,8 @@ public class OutcomeController {
 	String registerOutcome(@Validated Outcome outcome, BindingResult result, Model model,
 			@AuthenticationPrincipal MoneygrOidcUser user, HttpServletResponse response) {
 		if (result.hasErrors()) {
-			return outcome.getOutcomeDate() == null ? showOutcomes(model, user)
-					: showOutcomes(model, user, outcome.getOutcomeDate());
+			return outcome.getOutcomeDate() == null ? showOutcomes(model, user, false)
+					: showOutcomes(model, user, outcome.getOutcomeDate(), false);
 		}
 		if (StringUtils.isEmpty(outcome.getOutcomeBy())) {
 			outcome.setOutcomeBy(user.getName());

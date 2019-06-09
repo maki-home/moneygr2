@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
       - name: moneygr
-        image: making/moneygr2@sha256:2c83d0c556d80d6cc3aaf61115602cdb3e37953b34454ba07baee38fcbdb8458
+        image: making/moneygr2@sha256:6dddda635f52cbe3cd3b484d87eb0576a76fb142982f28457254952f00a40e1c
         ports:
         - containerPort: 8080
           name: http

@@ -20,6 +20,11 @@ public interface OutcomeRepository extends CrudRepository<Outcome, Long> {
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("fromDate") LocalDate fromDate,
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("toDate") LocalDate toDate);
 
+	@Query("SELECT x FROM Outcome x JOIN FETCH x.outcomeCategory WHERE x.isExpense = true AND x.outcomeDate BETWEEN :fromDate AND :toDate ORDER BY x.outcomeCategory.categoryId")
+	List<Outcome> findByOutcomeDateOnlyExpenses(
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("fromDate") LocalDate fromDate,
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("toDate") LocalDate toDate);
+
 	@Query("SELECT x.outcomeDate AS outcomeDate, SUM(x.amount * x.quantity) AS subTotal FROM Outcome x WHERE x.outcomeDate BETWEEN :fromDate AND :toDate GROUP BY x.outcomeDate ORDER BY x.outcomeDate ASC")
 	List<Outcome.SummaryByDate> findSummaryByDate(
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("fromDate") LocalDate fromDate,
