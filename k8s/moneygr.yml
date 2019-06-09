@@ -11,9 +11,7 @@ spec:
   ports:
   - protocol: TCP
     port: 8080
-    nodePort: 30097
     name: http
-  type: NodePort
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -36,15 +34,13 @@ spec:
     spec:
       containers:
       - name: moneygr
-        image: making/moneygr2
+        image: making/moneygr2@sha256:2c83d0c556d80d6cc3aaf61115602cdb3e37953b34454ba07baee38fcbdb8458
         ports:
         - containerPort: 8080
           name: http
         env:
-        - name: SERVER_PORT
-          value: "8080"
-        - name: _JAVA_OPTIONS
-          value: "-Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP"
+        - name: SPRING_ZIPKIN_BASE_URL
+          value: "https://zipkin.dev.ik.am"
         - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_UAA_CLIENT_ID
           value: moneygr
         - name: LOGGING_EXCEPTION_CONVERSION_WORD
@@ -68,9 +64,9 @@ spec:
               key: mysql-password
         resources:
           limits:
-            memory: "512Mi"
+            memory: "300Mi"
           requests:
-            memory: "512Mi"
+            memory: "300Mi"
         readinessProbe:
           httpGet:
             path: /actuator/health
@@ -107,15 +103,3 @@ spec:
       - backend:
           serviceName: moneygr-service
           servicePort: 8080
----
-apiVersion: apps.pivotal.io/v1beta1
-kind: Sink
-metadata:
-  name: logstash-sink
-  namespace: moneygr
-spec:
-  enable_tls: true
-  host: logstash.japaneast.cloudapp.azure.com
-  insecure_skip_verify: true
-  port: 5514
-  type: syslog
