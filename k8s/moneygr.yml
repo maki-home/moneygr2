@@ -34,11 +34,15 @@ spec:
     spec:
       containers:
       - name: moneygr
-        image: making/moneygr2@sha256:0dd28b07717cff4ec9f14abc54963e8f0f46e7ab13ce31eefa03c70707d6a700
+        image: making/moneygr2@sha256:1224638bf0aeb14f6a460f1512097a4d0bcb3605378c0e5a50277cc1d555159a
         ports:
         - containerPort: 8080
           name: http
         env:
+        - name: BPL_THREAD_COUNT
+          value: "24"
+        - name: JAVA_OPTS
+          value: " -XX:ReservedCodeCacheSize=32M -Xss512k"
         - name: SPRING_ZIPKIN_BASE_URL
           value: "https://zipkin.dev.ik.am"
         - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_UAA_CLIENT_ID

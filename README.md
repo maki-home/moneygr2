@@ -1,5 +1,13 @@
 # Moneygr2
 
+Build with `pack`
+
+```
+./pack-build.sh --publish
+```
+
+Build with `cf local`
+
 ```
 ./mvnw clean package -DskipTests=true
 cf local stage moneygr2 -p ./target/moneygr2-0.0.1-SNAPSHOT.jar
