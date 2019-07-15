@@ -1,5 +1,7 @@
 package am.ik.moneygr2.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -11,11 +13,13 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private final String uaaUrl;
 	private final RestTemplateBuilder restTemplateBuilder;
+	private final ObjectMapper objectMapper;
 
 	public SecurityConfig(@Value("${uaa-url}") String uaaUrl,
-			RestTemplateBuilder restTemplateBuilder) {
+			RestTemplateBuilder restTemplateBuilder, ObjectMapper objectMapper) {
 		this.uaaUrl = uaaUrl;
 		this.restTemplateBuilder = restTemplateBuilder;
+		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -23,14 +27,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests() //
 				.requestMatchers(EndpointRequest.to("health", "info", "prometheus"))
 				.permitAll() //
-				.anyRequest().authenticated() //
+				.anyRequest().hasRole("USERS") //
 				.and() //
 				.logout() //
 				.logoutSuccessUrl(uaaUrl + "/logout.do") //
 				.and() //
 				.oauth2Login() //
 				.userInfoEndpoint() //
-				.oidcUserService(
-						new MoneygrOidcUserService(restTemplateBuilder.build(), uaaUrl));
+				.oidcUserService(new MoneygrOidcUserService(restTemplateBuilder.build(),
+						uaaUrl, objectMapper));
 	}
 }
