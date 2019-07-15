@@ -47,6 +47,12 @@ spec:
           value: "https://zipkin.dev.ik.am"
         - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_UAA_CLIENT_ID
           value: moneygr
+        - name: SERVER_USE_FORWARD_HEADERS
+          value: "true"
+        - name: SERVER_TOMCAT_REMOTE_IP_HEADER
+          value: x-forwarded-for
+        - name: SERVER_TOMCAT_PROTOCOL_HEADER
+          value: x-forwarded-proto
         - name: LOGGING_EXCEPTION_CONVERSION_WORD
           value: "\t%replace(%replace(%xEx){'\n','@n@'}){'\t','    '}%nopex"
         - name: LOGGING_PATTERN_CONSOLE
