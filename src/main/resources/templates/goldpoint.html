@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Moneygr</title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}"/>
+</head>
+<body>
+<div class="uk-grid">
+    <div class="uk-width-10-10">
+        <nav class="uk-navbar">
+            <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
+        </nav>
+        <ul class="uk-tab" data-uk-tab="">
+            <li><a th:href="@{/outcomes}">支出</a></li>
+            <li><a th:href="@{/incomes}">収入</a></li>
+            <li><a th:href="@{/report}">今月のレポート</a></li>
+            <li>
+                <a th:href="@{${@environment.getProperty('uaa-url', 'http://localhost:9999/uaa')}}"><i
+                        class="uk-icon-user"></i> <span th:text="${user.fullName}"></span></a>
+            </li>
+        </ul>
+        <h3>Gold Point Card明細登録</h3>
+        <form id="goldPointCardImportForm" th:action="@{/outcomes/goldpoint}"
+              method="post" enctype="multipart/form-data"
+              th:object="${goldPointCardImportForm}"
+              class="uk-panel uk-panel-box uk-form">
+            <input class="uk-form" name="file" type="file"
+                   placeholder="Gold Point CardのCSVファイル"/><br/>
+            <input type="hidden" name="preview"/>
+            <button class="uk-button uk-button-primary">プレビュー</button>
+        </form>
+        <div th:if="${goldPointCartImportItemForm != null}">
+            <form id="goldPointCardImportItemForm" th:action="@{/outcomes/goldpoint}"
+                  method="post"
+                  th:object="${goldPointCartImportItemForm}"
+                  class="uk-panel uk-panel-box uk-form">
+                <table class="uk-table uk-table-condensed">
+                    <thead>
+                    <tr>
+                        <th>支出日</th>
+                        <th>支出名</th>
+                        <th>金額</th>
+                        <th>カテゴリ</th>
+                        <th>登録対象</th>
+                        <th>登録済み近似支出</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="outcome, status: ${goldPointCartImportItemForm.items}">
+                        <td>
+                            <label><input
+                                    th:field="*{items[__${status.index}__].outcomeDateString}"
+                                    class="uk-form"
+                                    type="date"/></label>
+                        </td>
+                        <td>
+                            <label><input
+                                    th:field="*{items[__${status.index}__].outcomeName}"
+                                    class="uk-form"/></label>
+                        </td>
+                        <td>
+                            <label><input th:field="*{items[__${status.index}__].amount}"
+                                          class="uk-form"/>円</label>
+                        </td>
+                        <td>
+                            <select class="uk-form-select"
+                                    th:field="*{items[__${status.index}__].outcomeCategoryId}">
+                                <option value="">----</option>
+                                <!--/*/ <th:block th:each="categoryGroup : ${categories}" th:label="${categoryGroup.key}"> /*/-->
+                                <option th:each="value : ${categoryGroup.value}"
+                                        th:text="${categoryGroup.key + '('+ value.value + ')'}"
+                                        th:value="${value.key}"></option>
+                                <!--/*/ </th:block> /*/-->
+                            </select>
+                        </td>
+                        <td>
+                            <label><input
+                                    th:field="*{items[__${status.index}__].included}"
+                                    class="uk-form"
+                                    type="checkbox"/></label>
+                        </td>
+                        <td>
+                            <ul>
+                                <li th:each="similar : ${outcome.similar}"
+                                    th:text="${similar.outcomeName}"></li>
+                            </ul>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <input type="hidden" name="import"/>
+                <button class="uk-button uk-button-primary">登録</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/3.8.3/superagent.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
+    <script>
+        const request = window.superagent;
+
+        function predict(item) {
+            const form = document.forms[1];
+            const outcomeCategoryId = form[item + 'outcomeCategoryId'];
+            if (outcomeCategoryId.value === null || outcomeCategoryId.value === '') {
+                request.post('/v1/predict')
+                    .type('form')
+                    .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
+                    .send({outcomeName: form[item + 'outcomeName'].value})
+                    .end(function (err, res) {
+                        const predicted = _(res.body).sortBy(function (x) {
+                            return -x.probability;
+                        }).head();
+                        if (predicted) {
+                            outcomeCategoryId.value = predicted.categoryId;
+                        } else {
+                            outcomeCategoryId.value = '';
+                        }
+                    });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const checks = document.querySelectorAll("input[type=checkbox]");
+            for (const check of checks) {
+                if (!check.checked) {
+                    continue;
+                }
+                let item = check.name.replace("included", "");
+                predict(item);
+            }
+        }, false);
+    </script>
+</div>
+</body>
+</html>

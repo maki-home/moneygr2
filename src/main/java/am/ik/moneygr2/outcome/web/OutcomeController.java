@@ -2,7 +2,6 @@ package am.ik.moneygr2.outcome.web;
 
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,7 +10,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 import am.ik.moneygr2.outcome.Outcome;
-import am.ik.moneygr2.outcome.OutcomeCategory;
 import am.ik.moneygr2.outcome.OutcomeCategoryRepository;
 import am.ik.moneygr2.outcome.OutcomeRepository;
 import am.ik.moneygr2.security.MoneygrOidcUser;
@@ -33,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class OutcomeController {
 	private final OutcomeRepository outcomeRepository;
+
 	private final OutcomeCategoryRepository outcomeCategoryRepository;
 
 	public OutcomeController(OutcomeRepository outcomeRepository,
@@ -81,7 +80,7 @@ public class OutcomeController {
 		model.addAttribute("total",
 				outcomes.stream().mapToLong(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user.asMember());
-		model.addAttribute("categories", this.outcomeCategories());
+		model.addAttribute("categories", this.outcomeCategoryRepository.outcomeCategories());
 		model.addAttribute("members", user.getMemberMap());
 		return "outcomes";
 	}
@@ -94,7 +93,7 @@ public class OutcomeController {
 		model.addAttribute("total",
 				outcomes.stream().mapToLong(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user.asMember());
-		model.addAttribute("categories", this.outcomeCategories());
+		model.addAttribute("categories", this.outcomeCategoryRepository.outcomeCategories());
 		model.addAttribute("members", user.getMemberMap());
 		return "outcomes";
 	}
@@ -117,7 +116,7 @@ public class OutcomeController {
 		model.addAttribute("total",
 				outcomes.stream().mapToLong(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user.asMember());
-		Map<String, Map<Integer, String>> categories = this.outcomeCategories();
+		Map<String, Map<Integer, String>> categories = this.outcomeCategoryRepository.outcomeCategories();
 		model.addAttribute("categories", categories);
 		model.addAttribute("parentCategory", categories.entrySet().stream()
 				.map(Map.Entry::getKey).toArray()[parentCategoryId - 1]);
@@ -139,16 +138,5 @@ public class OutcomeController {
 		Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
 		response.addCookie(cookie);
 		return "redirect:/outcomes/" + outcome.getOutcomeDate();
-	}
-
-	private Map<String, Map<Integer, String>> outcomeCategories() {
-		List<OutcomeCategory> categories = this.outcomeCategoryRepository.findAll();
-		Map<String, Map<Integer, String>> cat = new LinkedHashMap<>();
-		for (OutcomeCategory category : categories) {
-			String key = category.getParentOutcomeCategory().getParentCategoryName();
-			cat.computeIfAbsent(key, x -> new LinkedHashMap<>());
-			cat.get(key).put(category.getCategoryId(), category.getCategoryName());
-		}
-		return cat;
 	}
 }
