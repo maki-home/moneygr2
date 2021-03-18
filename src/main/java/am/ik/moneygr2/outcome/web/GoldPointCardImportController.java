@@ -65,7 +65,7 @@ public class GoldPointCardImportController {
 			for (GoldPointCartImportItem item : items) {
 				final List<Outcome> similar = outcomes.stream()
 						.filter(outcome -> Objects.equals(item.getOutcomeDate(), outcome.getOutcomeDate()) &&
-								Objects.equals(item.getAmount(), outcome.getAmount()))
+								Objects.equals(item.getAmount(), outcome.getAmount() * outcome.getQuantity()))
 						.collect(Collectors.toList());
 				item.setSimilar(similar);
 				item.setIncluded(similar.isEmpty());
