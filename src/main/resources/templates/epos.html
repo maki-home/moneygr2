@@ -24,8 +24,8 @@
                         class="uk-icon-user"></i> <span th:text="${user.fullName}"></span></a>
             </li>
         </ul>
-        <h3>Gold Point Card明細登録</h3>
-        <form id="importForm" th:action="@{/outcomes/goldpoint}"
+        <h3>Epos Card明細登録</h3>
+        <form id="importForm" th:action="@{/outcomes/epos}"
               method="post" enctype="multipart/form-data"
               th:object="${importForm}"
               class="uk-panel uk-panel-box uk-form">
@@ -35,7 +35,7 @@
             <button class="uk-button uk-button-primary">プレビュー</button>
         </form>
         <div th:if="${importItemForm != null}">
-            <form id="importItemForm" th:action="@{/outcomes/goldpoint}"
+            <form id="importItemForm" th:action="@{/outcomes/epos}"
                   method="post"
                   th:object="${importItemForm}"
                   class="uk-panel uk-panel-box uk-form">

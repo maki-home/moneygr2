@@ -71,7 +71,10 @@
             <input type="hidden" name="outcomeId"/>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
-        <p><a th:href="@{/outcomes/goldpoint}">Gold Point Card明細登録</a></p>
+        <p>
+            <a th:href="@{/outcomes/goldpoint}">Gold Point Card明細登録</a><br>
+            <a th:href="@{/outcomes/epos}">Epos Card明細登録</a>
+        </p>
         <h3>簡易支出検索</h3>
         <form class=" uk-form" method="get" th:action="@{/outcomes}">
             <input name="keyword"/>
