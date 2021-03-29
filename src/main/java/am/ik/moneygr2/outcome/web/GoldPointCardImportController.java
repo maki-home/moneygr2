@@ -36,15 +36,15 @@ public class GoldPointCardImportController {
 	}
 
 	@GetMapping
-	public String form(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute GoldPointCardImportForm form, Model model) {
+	public String form(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute ImportForm form, Model model) {
 		model.addAttribute("user", user.asMember());
 		return "goldpoint";
 	}
 
 	@PostMapping(params = "preview")
-	public String preview(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute GoldPointCardImportForm form, Model model) throws Exception {
+	public String preview(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute ImportForm form, Model model) throws Exception {
 		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(form.getFile().getResource().getInputStream(), "Windows-31J"))) {
-			final List<GoldPointCartImportItem> items = reader.lines()
+			final List<ImportItem> items = reader.lines()
 					.map(line -> {
 						final List<String> columns = Arrays.asList(line.split(","));
 						if (!columns.get(0).startsWith("20")) {
@@ -53,16 +53,16 @@ public class GoldPointCardImportController {
 						final LocalDate outcomeDate = LocalDate.parse(columns.get(0).replace("/", "-"));
 						final String outcomeName = columns.get(1).replace("ＰＡＹＰＡＹ＊", "").replace("セブンーイレブン", "セブンイレブン");
 						final long amount = Long.parseLong(columns.get(2));
-						return new GoldPointCartImportItem(outcomeDate, outcomeName, amount);
+						return new ImportItem(outcomeDate, outcomeName, amount);
 					})
 					.filter(Objects::nonNull)
 					.filter(x -> x.getAmount() > 0)
-					.sorted(Comparator.comparing(GoldPointCartImportItem::getOutcomeDate))
+					.sorted(Comparator.comparing(ImportItem::getOutcomeDate))
 					.collect(Collectors.toList());
 			final LocalDate startDate = items.get(0).getOutcomeDate();
 			final LocalDate endDate = items.get(items.size() - 1).getOutcomeDate();
 			final List<Outcome> outcomes = outcomeRepository.findByOutcomeDate(startDate, endDate);
-			for (GoldPointCartImportItem item : items) {
+			for (ImportItem item : items) {
 				final List<Outcome> similar = outcomes.stream()
 						.filter(outcome -> Objects.equals(item.getOutcomeDate(), outcome.getOutcomeDate()) &&
 								Objects.equals(item.getAmount(), outcome.getAmount() * outcome.getQuantity()))
@@ -73,9 +73,9 @@ public class GoldPointCardImportController {
 					item.setOutcomeCategoryId(similar.get(0).getOutcomeCategory().getCategoryId());
 				}
 			}
-			final GoldPointCartImportItemForm goldPointCartImportItemForm = new GoldPointCartImportItemForm();
-			goldPointCartImportItemForm.setItems(items);
-			model.addAttribute("goldPointCartImportItemForm", goldPointCartImportItemForm);
+			final ImportItemForm importItemForm = new ImportItemForm();
+			importItemForm.setItems(items);
+			model.addAttribute("importItemForm", importItemForm);
 			model.addAttribute("categories", this.outcomeCategoryRepository.outcomeCategories());
 		}
 		model.addAttribute("user", user.asMember());
@@ -83,13 +83,13 @@ public class GoldPointCardImportController {
 	}
 
 	@PostMapping(params = "import")
-	public String bulkImport(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute GoldPointCartImportItemForm form, Model model, RedirectAttributes attributes) throws Exception {
-		GoldPointCartImportItemForm goldPointCartImportItemForm = new GoldPointCartImportItemForm();
-		final List<GoldPointCartImportItem> items = form.getItems().stream().filter(GoldPointCartImportItem::isIncluded).collect(Collectors.toList());
-		goldPointCartImportItemForm.setItems(items);
+	public String bulkImport(@AuthenticationPrincipal MoneygrOidcUser user, @ModelAttribute ImportItemForm form, Model model, RedirectAttributes attributes) throws Exception {
+		ImportItemForm importItemForm = new ImportItemForm();
+		final List<ImportItem> items = form.getItems().stream().filter(ImportItem::isIncluded).collect(Collectors.toList());
+		importItemForm.setItems(items);
 		if (items.stream().anyMatch(x -> x.getOutcomeCategoryId() == null)) {
 			model.addAttribute("user", user.asMember());
-			model.addAttribute("goldPointCartImportItemForm", goldPointCartImportItemForm);
+			model.addAttribute("importItemForm", importItemForm);
 			model.addAttribute("categories", this.outcomeCategoryRepository.outcomeCategories());
 			return "goldpoint";
 		}

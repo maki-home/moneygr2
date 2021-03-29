@@ -8,7 +8,7 @@ import java.util.List;
 import am.ik.moneygr2.outcome.Outcome;
 import am.ik.moneygr2.outcome.OutcomeCategory;
 
-public class GoldPointCartImportItem implements Serializable {
+public class ImportItem implements Serializable {
 	private LocalDate outcomeDate;
 
 	private String outcomeName;
@@ -21,13 +21,13 @@ public class GoldPointCartImportItem implements Serializable {
 
 	private boolean included;
 
-	public GoldPointCartImportItem(LocalDate outcomeDate, String outcomeName, Long amount) {
+	public ImportItem(LocalDate outcomeDate, String outcomeName, Long amount) {
 		this.outcomeDate = outcomeDate;
 		this.outcomeName = outcomeName;
 		this.amount = amount;
 	}
 
-	public GoldPointCartImportItem() {
+	public ImportItem() {
 	}
 
 	public LocalDate getOutcomeDate() {
@@ -107,7 +107,7 @@ public class GoldPointCartImportItem implements Serializable {
 
 	@Override
 	public String toString() {
-		return "GoldPointCartImportItem{" +
+		return "ImportItem{" +
 				"outcomeDate=" + outcomeDate +
 				", outcomeName='" + outcomeName + '\'' +
 				", amount=" + amount +

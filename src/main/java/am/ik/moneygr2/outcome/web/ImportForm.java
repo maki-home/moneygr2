@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class GoldPointCardImportForm implements Serializable {
+public class ImportForm implements Serializable {
 	private MultipartFile file;
 
 	public MultipartFile getFile() {
@@ -17,7 +17,7 @@ public class GoldPointCardImportForm implements Serializable {
 
 	@Override
 	public String toString() {
-		return "GoldPointCardImportForm{" +
+		return "ImportForm{" +
 				"file=" + file +
 				'}';
 	}

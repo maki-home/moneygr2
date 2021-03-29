@@ -25,19 +25,19 @@
             </li>
         </ul>
         <h3>Gold Point Card明細登録</h3>
-        <form id="goldPointCardImportForm" th:action="@{/outcomes/goldpoint}"
+        <form id="importForm" th:action="@{/outcomes/goldpoint}"
               method="post" enctype="multipart/form-data"
-              th:object="${goldPointCardImportForm}"
+              th:object="${importForm}"
               class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="file" type="file"
                    placeholder="Gold Point CardのCSVファイル"/><br/>
             <input type="hidden" name="preview"/>
             <button class="uk-button uk-button-primary">プレビュー</button>
         </form>
-        <div th:if="${goldPointCartImportItemForm != null}">
-            <form id="goldPointCardImportItemForm" th:action="@{/outcomes/goldpoint}"
+        <div th:if="${importItemForm != null}">
+            <form id="importItemForm" th:action="@{/outcomes/goldpoint}"
                   method="post"
-                  th:object="${goldPointCartImportItemForm}"
+                  th:object="${importItemForm}"
                   class="uk-panel uk-panel-box uk-form">
                 <table class="uk-table uk-table-condensed">
                     <thead>
@@ -51,7 +51,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="outcome, status: ${goldPointCartImportItemForm.items}">
+                    <tr th:each="outcome, status: ${importItemForm.items}">
                         <td>
                             <label><input
                                     th:field="*{items[__${status.index}__].outcomeDateString}"
