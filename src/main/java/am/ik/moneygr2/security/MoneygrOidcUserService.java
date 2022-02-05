@@ -29,9 +29,13 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class MoneygrOidcUserService
 		implements OAuth2UserService<OidcUserRequest, OidcUser> {
 	private final OidcUserService delegate;
+
 	private final RestTemplate restTemplate;
+
 	private final String uaaUrl;
+
 	private final ObjectMapper objectMapper;
+
 	private final Logger log = LoggerFactory.getLogger(MoneygrOidcUserService.class);
 
 	public MoneygrOidcUserService(RestTemplate restTemplate, String uaaUrl,
@@ -57,7 +61,7 @@ public class MoneygrOidcUserService
 		}
 		final List<String> roles = idToken.has("roles")
 				? StreamSupport.stream(idToken.get("roles").spliterator(), false)
-						.map(JsonNode::asText).collect(Collectors.toList())
+				.map(JsonNode::asText).collect(Collectors.toList())
 				: Collections.emptyList();
 		final RequestEntity<Void> req = RequestEntity
 				.get(URI.create(this.uaaUrl + "/Users"))
@@ -69,10 +73,15 @@ public class MoneygrOidcUserService
 		final Map<String, Member> memberMap = stream.filter(n -> n.has("externalId"))
 				.filter(n -> n.get("externalId").asText()
 						.endsWith("ou=people,dc=ik,dc=am"))
+				.peek(n -> log.info("User = {}", n))
 				.collect(Collectors.toMap(n -> n.get("userName").asText(),
-						n -> new Member(n.get("userName").asText(),
-								n.get("name").get("familyName").asText(),
-								n.get("name").get("givenName").asText())));
+						n -> {
+							final JsonNode familyName = n.get("name").get("familyName");
+							final JsonNode givenName = n.get("name").get("givenName");
+							return new Member(n.get("userName").asText(),
+									familyName == null ? "" : familyName.asText(),
+									givenName == null ? "" : givenName.asText());
+						}));
 		return new MoneygrOidcUser(this.delegate.loadUser(userRequest), roles, memberMap);
 	}
 }
