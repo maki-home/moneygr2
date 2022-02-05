@@ -12,6 +12,8 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.http.RequestEntity;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -30,6 +32,7 @@ public class MoneygrOidcUserService
 	private final RestTemplate restTemplate;
 	private final String uaaUrl;
 	private final ObjectMapper objectMapper;
+	private final Logger log = LoggerFactory.getLogger(MoneygrOidcUserService.class);
 
 	public MoneygrOidcUserService(RestTemplate restTemplate, String uaaUrl,
 			ObjectMapper objectMapper) {
@@ -60,6 +63,7 @@ public class MoneygrOidcUserService
 				.get(URI.create(this.uaaUrl + "/Users"))
 				.header(AUTHORIZATION, "Bearer " + accessToken).build();
 		final JsonNode node = this.restTemplate.exchange(req, JsonNode.class).getBody();
+		log.info("Users = {}", node);
 		final Stream<JsonNode> stream = StreamSupport
 				.stream(node.get("resources").spliterator(), false);
 		final Map<String, Member> memberMap = stream.filter(n -> n.has("externalId"))
